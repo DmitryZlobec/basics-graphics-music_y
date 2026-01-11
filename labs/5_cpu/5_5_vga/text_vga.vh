@@ -45,8 +45,8 @@ module text_vga
 );
     
     wire vga_clk;
-    reg       [w_x     - 1:0] rx;
-    reg       [w_y     - 1:0] ry;
+    reg       [12:0] rx;
+    reg       [12:0] ry;
 
     reg [12:0] text_symbol; // Simbol place in ram
     reg  [12:0] text_wr_addr; // Simbol place in ram
@@ -136,19 +136,29 @@ module text_vga
     assign row = y >> 3;
     assign col = x >> 3;
     wire start;
-    assign start = (x[2:0] == 3'b100);
     wire end_of_row;
-    assign end_of_row = (x[9:0] == 10'b10_0111_1101);
+    wire end_of_row1;
+
+        
+        
+    assign start = (x[2:0] == 3'b100) && (x<640);
+    assign end_of_row = (x == 640);
 
 
-    always_ff @ (posedge vga_clk ) begin  
+
+    always_ff @ (posedge clk) begin
          begin
-            if(start) begin
-                    text_symbol <= (row<<6)+(row<<4)+(x>>3)+1;
+            if(end_of_row) begin
+                    text_symbol <= ((row)<<6)+((row)<<4);
+                    ry<=y+1;
+            end
+              else 
+              if(start) begin
+                    text_symbol<= (row<<6)+(row<<4)+(x>>3)+1;
                     ry<=y;       
             end 
          end
-    end
+    end 
   
     wire [7:0] dout;
         

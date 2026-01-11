@@ -8,6 +8,8 @@ module testbench;
       reg rst;
     logic [11:0] x;
     logic [11:0] y;
+    logic [9:0] CounterX=0, CounterY=0;
+
     wire [12:0] text_symbol;
     reg [12:0] text_symbol_r;
     
@@ -16,10 +18,10 @@ module testbench;
   initial
   begin
     clk = '0;
-    forever # 10 clk = ~ clk;
+    forever # 1 clk = ~ clk;
   end
 
-
+   
     initial
   begin
     `ifdef __ICARUS__
@@ -29,25 +31,15 @@ module testbench;
         repeat(2) @(posedge clk);
         rst = 0;
 
-    x=0;
-    y=0;
-    for (int i = 0; i < 3000; i ++)
+    
+    for (int i = 0; i < 10000; i ++)
     begin
-
-          @ (posedge clk);
-          
-            if (x == 639) begin
-                x = 0;
-                if (y == 479) begin
-                    y = 0;
-                    x=0;
-                end else begin
-                    y = y + 1;
-                end
-            end else begin
-                x = x + 1;
-            end
+             @(posedge clk) CounterX <= (CounterX==799) ? 0 : CounterX+1;  
+             @(posedge clk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : CounterY+1;
     end
+
+ 
+
 
 
     $display("\n");
@@ -61,8 +53,8 @@ module testbench;
     my_module uut (
         .clk(clk),
         .rst(rst),
-        .x(x),
-        .y(y),
+        .x(CounterX),
+        .y(CounterY),
         .text_symbol(text_symbol),
         .ry(ry)
     );

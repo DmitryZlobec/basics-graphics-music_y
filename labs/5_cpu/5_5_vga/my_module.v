@@ -16,19 +16,23 @@ module my_module (
       reg [7:0] character;
           reg  [10:0] row_in_ram;  //pixels row of char 
 
+    wire start;
+    wire end_of_row;
 
         
-    assign start = (x[2:0] == 3'b100);
-    assign end_of_row = (x[11:0] == 12'b0010_0111_1101);
+    assign start = (x[2:0] == 3'b100) && (x<640);
+    assign end_of_row = (x == 640);
+
 
 
     always_ff @ (posedge clk) begin
          begin
             if(end_of_row) begin
-                    text_symbol_r<= (((y+1)>>3)<<6)+(((y+1)>>3)<<4);
-                    ry<=y+1;
+                    text_symbol_r <= ((row)<<6)+((row)<<4);
+                    ry<=y;
             end
-            else  if(start) begin
+              else 
+              if(start) begin
                     text_symbol_r<= (row<<6)+(row<<4)+(x>>3)+1;
                     ry<=y;       
             end 
