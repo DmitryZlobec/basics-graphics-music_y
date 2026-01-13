@@ -32,6 +32,8 @@
 /* processor                                                                               */
 `include "yrv_top.vh"
 
+`include "serial_top.vh"
+
 // For real boards
 `ifndef SIMULATION
 `define BOOT_FROM_AUX_UART
@@ -402,9 +404,20 @@ initial $readmemh("code_demo.mem8", mcu_mem);
       end
     end
 
+
   /*****************************************************************************************/
   /* serial port                                                                           */
   /*****************************************************************************************/
-  // You cam add own serial port on port7
+  // div_rate = 27*1000 *1000/(9600*16)
   
+  serial_top SERIAL ( .bufr_done(bufr_done), .bufr_empty(bufr_empty), .bufr_full(bufr_full),
+                      .bufr_ovr(bufr_ovr), .rx_rdata(rx_rdata), .ser_clk(ser_clk),
+                      .ser_txd(ser_txd), .cks_mode(port6_reg[0]), .clkp(clk),
+                      .div_rate(port6_reg[15:4]), .ld_wdata(ld_wdata), .rd_rdata(rd_rdata),
+                      .s_reset(port6_reg[3]), .ser_rxd(ser_rxd), .tx_wdata(mem_wdata[23:16]) );
+
+  assign ld_wdata  = io_wr_reg && port76_dec && mem_ble_reg[2] && mem_ready;
+  assign rd_rdata  = io_rd_reg && port76_dec && mem_ble_reg[2] && mem_ready;
+  assign port7_dat = {4'h0, bufr_empty, bufr_done, bufr_full, bufr_ovr, rx_rdata};
+
   endmodule
