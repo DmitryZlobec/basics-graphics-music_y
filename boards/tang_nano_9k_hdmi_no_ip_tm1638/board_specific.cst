@@ -20,11 +20,11 @@ IO_LOC "LED[5]"             16;
 # However we can use LARGE_LCD_DE, VS, HS, CK,
 # because they are assigned to a different bank.
 
-  IO_LOC "LARGE_LCD_DE"     33;  # HS: pcm5102: i2s_audio_out: mclk
-  IO_LOC "LARGE_LCD_VS"     34;  # CK: pcm5102: i2s_audio_out: bclk
-  IO_LOC "LARGE_LCD_HS"     40;  # B7: pcm5102: i2s_audio_out: sdata
-  IO_LOC "LARGE_LCD_CK"     35;  # B6: pcm5102: i2s_audio_out: lrclk
-# IO_LOC "LARGE_LCD_INIT"   63;
+#  IO_LOC "LARGE_LCD_DE"     33;  # HS: pcm5102: i2s_audio_out: mclk
+#  IO_LOC "LARGE_LCD_VS"     34;  # CK: pcm5102: i2s_audio_out: bclk
+#  IO_LOC "LARGE_LCD_HS"     40;  # B7: pcm5102: i2s_audio_out: sdata
+#  IO_LOC "LARGE_LCD_CK"     35;  # B6: pcm5102: i2s_audio_out: lrclk
+#  IO_LOC "LARGE_LCD_INIT"   63;
 # IO_LOC "LARGE_LCD_BL"     86;
 
 # IO_LOC "LARGE_LCD_R[3]"   75;
@@ -47,26 +47,40 @@ IO_LOC "LED[5]"             16;
 # IO_LOC "LARGE_LCD_B[7]"   41;
 
 IO_LOC "UART_RX"            18;
+IO_PORT "UART_RX" IO_TYPE=LVCMOS33;
+
 IO_LOC "UART_TX"            17;
+IO_PORT "UART_TX" IO_TYPE=LVCMOS33;
 
 # The following 4 pins (TF_CS, TF_MOSI, TF_SCLK, TF_MISO)
 # are used for INMP441 microphone
 # in basics-graphics-music labs
 
-IO_LOC "TF_CS"              38;  # inmp441: lr
-IO_LOC "TF_MOSI"            37;  # inmp441: ws
-IO_LOC "TF_SCLK"            36;  # inmp441: sck
-IO_LOC "TF_MISO"            39;  # inmp441: sd
+# IO_LOC "TF_CS"              38;  # inmp441: lr
+# IO_LOC "TF_MOSI"            37;  # inmp441: ws
+# IO_LOC "TF_SCLK"            36;  # inmp441: sck
+# IO_LOC "TF_MISO"            39;  # inmp441: sd
 
 # The first 3 GPIO pins are used for TM1638 I/O module
 # which carries 8 LEDs, 8-digit 7-segment display and 8 keys
 
 IO_LOC "GPIO[0]"            25;  # tm1638: sio_data
+IO_PORT "GPIO[0]" IO_TYPE=LVCMOS33;
+
 IO_LOC "GPIO[1]"            26;  # tm1638: sio_clk
+IO_PORT "GPIO[1]" IO_TYPE=LVCMOS33;
+
 IO_LOC "GPIO[2]"            27;  # tm1638: sio_stb
+IO_PORT "GPIO[2]" IO_TYPE=LVCMOS33;
+
 IO_LOC "GPIO[3]"            28;
+IO_PORT "GPIO[3]" IO_TYPE=LVCMOS33;
+
 IO_LOC "GPIO[4]"            29;
+IO_PORT "GPIO[4]" IO_TYPE=LVCMOS33;
+
 IO_LOC "GPIO[5]"            30;
+IO_PORT "GPIO[5]" IO_TYPE=LVCMOS33;
 
 # The 4 pins SMALL_LCD_CLK, _CS, _RS and _DATA
 # share bank with TMDS pins
@@ -116,6 +130,17 @@ IO_PORT "TMDSn[2]" IO_TYPE=LVCMOS33;
 # IO_LOC "FLASH_MOSI"         61;
 # IO_LOC "FLASH_MISO"         62;
 
+# External sd card
+IO_LOC "sd_sclk" 36;
+IO_LOC "sd_mosi" 37; // SD_CMD 
+IO_LOC "sd_miso" 39; // SD_DAT0 
+IO_LOC "sd_cs"   38; // SD_DAT3 
+
+IO_PORT "sd_sclk" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;
+IO_PORT "sd_mosi" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;
+IO_PORT "sd_miso" IO_TYPE=LVCMOS33 PULL_MODE=UP;
+IO_PORT "sd_cs"   IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;
+
 # The following pins are not used for the lab examples
 # because they are 1.8V compatible
 
@@ -126,3 +151,16 @@ IO_PORT "TMDSn[2]" IO_TYPE=LVCMOS33;
 # IO_LOC "GPIO_1_8_V_UNUSED[4]" 81;
 # IO_LOC "GPIO_1_8_V_UNUSED[5]" 80;
 # IO_LOC "GPIO_1_8_V_UNUSED[6]" 79;
+
+
+// Определение местоположения пинов (IO_LOC)
+//IO_LOC "spiCS" 38;
+//IO_LOC "spiMosi" 37;
+//IO_LOC "spiClk" 36;
+//IO_LOC "spiMiso" 39;
+
+// Определение параметров портов (IO_PORT)
+//IO_PORT "spiCS" IO_TYPE=LVCMOS33 PULL_MODE=UP DRIVE=8;
+//IO_PORT "spiMosi" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;
+//IO_PORT "spiClk" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;
+//IO_PORT "spiMiso" IO_TYPE=LVCMOS33 PULL_MODE=UP;

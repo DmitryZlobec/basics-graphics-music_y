@@ -1,0 +1,151 @@
+module top (
+    input  wire       clk,
+    input  wire       rst_n,
+    input  wire       btn_n,
+    output wire [5:0] led,
+    output wire       spiMosi,
+    input  wire       spiMiso, // Изменили на input
+    output wire       spiClk,
+    output wire       spiCS    // Изменили на output
+);
+
+
+
+
+
+    // MicroSD SPI/SD Mode/Nexys 4
+    // 1: Unused / DAT2 / SD_DAT[2]
+    // 2: CS / DAT3 / SD_DAT[3]
+    // 3: MOSI / CMD / SD_CMD
+    // 4: VDD / VDD / ~SD_RESET
+    // 5: SCLK / SCLK / SD_SCK
+    // 6: GND / GND / - 
+    // 7: MISO / DAT0 / SD_DAT[0]
+    // 8: UNUSED / DAT1 / SD_DAT[1]
+
+    
+    reg rd = 0;
+    reg wr = 0;
+    reg [7:0] din = 0;
+    wire [7:0] dout;
+    wire byte_available;
+    wire ready;
+    wire ready_for_next_byte;
+    reg [31:0] adr;
+    
+    reg [31:0] bytes;
+    reg [7:0] bytes_read;
+    
+    wire [4:0] state;
+
+    reg     [7:0] mcu_mem_bank0 [0:127];                    /* system ram banks             */
+    reg     [7:0] mcu_mem_bank1 [0:127];
+    reg     [7:0] mcu_mem_bank2 [0:127];
+    reg     [7:0] mcu_mem_bank3 [0:127];
+    reg  [9:0] byte_cnt;
+
+
+    wire btn = ~btn_n;
+    
+    parameter STATE_INIT = 0;
+    parameter STATE_START = 1;
+    parameter STATE_WRITE = 2;
+    parameter STATE_READ = 3;
+    parameter STATE_IDLE = 4;
+    parameter STATE_WAIT_RELEASE = 5;
+
+    reg [2:0] test_state; 
+//  assign led = ~{state, ready};
+    assign led = ~{  mcu_mem_bank0[0]};
+//  assign led = ~{   test_state, ready};
+
+reg error_led = 0;
+
+wire  rst = ~ rst_n;
+
+
+reg [2:0]clkcounter = 0;
+
+    always @ (posedge clk) begin
+        if (rst) clkcounter <= 3'b0;
+        else clkcounter <= clkcounter + 1;
+    end
+
+wire clk_pulse_slow = (clkcounter == 3'b0);
+
+sd_controller sdcont(.cs(spiCS), .mosi(spiMosi), .miso(spiMiso),
+            .sclk(spiClk), .rd(rd), .wr(wr), .reset(rst),
+            .din(din), .dout(dout), .byte_available(byte_available),
+            .ready(ready), .address(adr), 
+            .ready_for_next_byte(ready_for_next_byte), .clk(clk), 
+            .status(state), .clk_pulse_slow(clk_pulse_slow));
+    
+
+            always @(posedge clk) begin
+                if(!rst_n) begin
+                    bytes <= 0;
+                    byte_cnt<= 0;
+                    bytes_read <= 0;
+                    din <= 0;
+                    wr <= 0;
+                    rd <= 0;
+                    adr <=0;
+                    error_led<=0;
+                    test_state <= STATE_INIT; 
+                    adr <= 32'h00_00_00_00;
+                end
+                else begin
+                     case (test_state)
+                           STATE_INIT: begin
+                                if(ready) begin
+                                    test_state <= STATE_START;
+                                    bytes_read <=0;
+                                    byte_cnt<= 0;
+                                    rd <= 1;       
+                                end
+                            end
+
+                            STATE_START: begin
+                                    if(ready == 0) begin
+                                        test_state <= STATE_READ;
+                                        rd <= 0;       
+                                    end
+                            end
+
+                            STATE_READ: begin
+                                if(byte_available && clk_pulse_slow) begin
+                                    case (byte_cnt[1:0])
+                                        2'b00: mcu_mem_bank0[byte_cnt[8:2]] <= dout;
+                                        2'b01: mcu_mem_bank1[byte_cnt[8:2]] <= dout;
+                                        2'b10: mcu_mem_bank2[byte_cnt[8:2]] <= dout;
+                                        2'b11: mcu_mem_bank3[byte_cnt[8:2]] <= dout;
+                                    endcase
+                                    if (byte_cnt == 511) begin
+                                        test_state <= STATE_IDLE;
+                                    end else begin
+                                        byte_cnt <= byte_cnt + 1'b1;
+                                    end
+                                end
+                            end
+
+                            STATE_IDLE: begin
+                                test_state <= STATE_IDLE;
+                                error_led <= 1'b1;
+                                if(btn) begin
+                                        test_state <= STATE_WAIT_RELEASE;
+                                end
+                            end
+
+                            STATE_WAIT_RELEASE: begin
+                                if(!btn) begin 
+                                    adr <= adr+512;
+                                    test_state <= STATE_INIT;
+                                end
+                            end
+                    endcase
+                end
+            end
+endmodule
+
+
+

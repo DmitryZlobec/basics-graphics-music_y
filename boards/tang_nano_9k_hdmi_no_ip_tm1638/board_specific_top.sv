@@ -83,6 +83,14 @@ module board_specific_top
     inout                        TF_MISO,
 
     inout  [w_gpio       - 1:0]  GPIO,
+    
+   
+    output [0:0] O_psram_ck,
+	output [0:0] O_psram_ck_n,
+	inout  [7:0] IO_psram_dq,
+	inout  [0:0] IO_psram_rwds,
+	output [0:0] O_psram_cs_n,
+	output [0:0] O_psram_reset_n,
 
     // The 4 pins SMALL_LCD_CLK, _CS, _RS and _DATA
     // share bank with TMDS pins
@@ -105,6 +113,11 @@ module board_specific_top
     // output [               2:0]  TMDS_D_P
          output [2:0] TMDSp, TMDSn,
 	  output TMDSp_clock, TMDSn_clock
+      ,
+    output sd_cs,
+    output sd_mosi,
+    input  sd_miso,
+    output sd_sclk
 
     // This pins have bank conflict when used with HDMI
 
@@ -247,6 +260,7 @@ module board_specific_top
     //------------------------------------------------------------------------
 
     wire slow_clk;
+   
 
     slow_clk_gen # (.fast_clk_mhz (clk_mhz), .slow_clk_hz (1))
     i_slow_clk_gen (.slow_clk (slow_clk), .*);
@@ -295,15 +309,18 @@ module board_specific_top
 
         .mic           ( mic           ),
         .sound         ( sound         ),
-        .gpio          ( GPIO          )
-        
-        `ifdef YRV_HDMI
-        ,
+        .gpio          ( GPIO          ),
         .clk_TMDS      (clk_TMDS),
         .hsync         (hSync),
         .vsync         (vSync),
-        .display_on    (DrawArea)
-        `endif
+        .display_on    (DrawArea),
+
+        .sd_cs(sd_cs),
+        .sd_mosi(sd_mosi),
+        .sd_miso(sd_miso),
+        .sd_sclk(sd_sclk)
+        
+
     );
 
     //------------------------------------------------------------------------
@@ -342,23 +359,55 @@ module board_specific_top
     ////////////////////////////////////////////////////////////////////////
     wire clk_TMDS, DCM_TMDS_CLKFX;  // 25MHz x 10 = 250MHz
     wire clk_50; //For CPU
-    reg pixclk; 
+    wire clkout,clkout_5,clkout_2;
+    // wire  pixclk;
+    reg  pixclk;
+
+
 
     Gowin_rPLL_250 i_pll(
         .clkout(DCM_TMDS_CLKFX), //output clkout
         .clkin(clk) //input clkin
     );
 
-    Gowin_rPLL_50 i_ppl_pixclk(
-        .clkout(clk_50), //output clkout
-        .clkin(clk_TMDS) //input clkin
-    );
+    // Gowin_rPLL_50 i_ppl_pixclk(
+    //     .clkout(clk_50), //output clkout
+    //     .clkin(clk_TMDS) //input clkin
+    // );
 
-    always @(posedge clk_50)
+    always @(posedge clkout_5)
         if(rst)
             pixclk <= '0;
         else
             pixclk <= ~pixclk;
+
+    //     Gowin_rPLL_100 pll_100(
+    //     .clkout(clkout), //output clkout
+    //     .clkin(clkin) //input clkin
+    // );
+
+    //     Gowin_CLKDIV div4(
+    //     .clkout(pixclk), //output clkout
+    //     .hclkin(clkout), //input hclkin
+    //     .resetn(1'b1) //input resetn
+    // );
+
+    wire resetn = ~ rst;
+
+    Gowin_CLKDIV_5 div5(
+        .clkout(clkout_5), //output clkout
+        .hclkin(clk_TMDS), //input hclkin
+        .resetn(resetn) //input resetn
+    );
+
+
+    // Gowin_CLKDIV2 div2(
+    //     .clkout(clkout_2), //output clkout
+    //     .hclkin(clkout_5), //input hclkin
+    //     .resetn(resetn) //input resetn
+    // );
+
+    // assign pixclk = clkout_2;
 
     BUFG  BUFG_TMDSp(.I(DCM_TMDS_CLKFX), .O(clk_TMDS));   
 
